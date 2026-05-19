@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR & 短縮URL ジェネレーター</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      padding: 40px;
+      width: 100%;
+      max-width: 540px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1a202c;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #718096;
+      margin-bottom: 28px;
+    }
+
+    .form-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: #667eea;
+    }
+
+    button[type="submit"] {
+      padding: 12px 20px;
+      background: #667eea;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    button[type="submit"]:hover { background: #5a67d8; }
+    button[type="submit"]:active { transform: scale(0.97); }
+
+    .error {
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: #fff5f5;
+      border: 1px solid #fed7d7;
+      border-radius: 8px;
+      color: #c53030;
+      font-size: 0.88rem;
+    }
+
+    .result {
+      margin-top: 28px;
+      padding-top: 28px;
+      border-top: 1px solid #e2e8f0;
+      display: none;
+    }
+
+    .result.visible { display: block; }
+
+    .qr-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .qr-wrap img {
+      width: 240px;
+      height: 240px;
+      border: 1px solid #e2e8f0;
+      image-rendering: crisp-edges;
+    }
+
+    .label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #a0aec0;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 6px;
+    }
+
+    .url-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .url-box {
+      flex: 1;
+      padding: 10px 14px;
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: #2d3748;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .copy-btn {
+      padding: 8px 14px;
+      background: #edf2f7;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #4a5568;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+
+    .copy-btn:hover { background: #e2e8f0; }
+    .copy-btn.copied { background: #c6f6d5; color: #276749; }
+
+    .download-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      padding: 10px;
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #4a5568;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+
+    .download-btn:hover { background: #edf2f7; }
+
+    .spinner {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #fff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin: auto;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>QR & 短縮URL</h1>
+    <p class="subtitle">URLを入力してQRコードと短縮URLを生成します</p>
+
+    <form id="form">
+      <div class="form-group">
+        <input type="text" id="urlInput" placeholder="https://example.com" autocomplete="off" />
+        <button type="submit">
+          <span id="btnText">生成</span>
+          <span class="spinner" id="spinner"></span>
+        </button>
+      </div>
+    </form>
+
+    <div class="error" id="errorMsg" style="display:none"></div>
+
+    <div class="result" id="result">
+      <div class="qr-wrap">
+        <img id="qrImg" src="" alt="QR Code" />
+      </div>
+
+      <div class="label">短縮URL</div>
+      <div class="url-row">
+        <div class="url-box" id="shortUrl"></div>
+        <button class="copy-btn" id="copyBtn" onclick="copyShort()">コピー</button>
+      </div>
+
+      <div class="label">元のURL</div>
+      <div class="url-row">
+        <div class="url-box" id="originalUrl"></div>
+      </div>
+
+      <a id="downloadBtn" class="download-btn" download="qrcode.png">
+        ⬇ QRコードをダウンロード
+      </a>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("form");
+    const urlInput = document.getElementById("urlInput");
+    const errorMsg = document.getElementById("errorMsg");
+    const result = document.getElementById("result");
+    const qrImg = document.getElementById("qrImg");
+    const shortUrlEl = document.getElementById("shortUrl");
+    const originalUrlEl = document.getElementById("originalUrl");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const btnText = document.getElementById("btnText");
+    const spinner = document.getElementById("spinner");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const url = urlInput.value.trim();
+      if (!url) return;
+
+      errorMsg.style.display = "none";
+      result.classList.remove("visible");
+      btnText.style.display = "none";
+      spinner.style.display = "block";
+
+      try {
+        const fd = new FormData();
+        fd.append("url", url);
+        const basePath = window.location.pathname.endsWith("/")
+          ? window.location.pathname
+          : window.location.pathname + "/";
+        const res = await fetch(basePath + "shorten", { method: "POST", body: fd });
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.detail || "エラーが発生しました");
+        }
+
+        const dataUrl = "data:image/png;base64," + data.qr_base64;
+        qrImg.src = dataUrl;
+        shortUrlEl.textContent = data.short_url;
+        originalUrlEl.textContent = data.original_url;
+        downloadBtn.href = dataUrl;
+        result.classList.add("visible");
+        document.getElementById("copyBtn").classList.remove("copied");
+        document.getElementById("copyBtn").textContent = "コピー";
+      } catch (err) {
+        errorMsg.textContent = err.message;
+        errorMsg.style.display = "block";
+      } finally {
+        btnText.style.display = "inline";
+        spinner.style.display = "none";
+      }
+    });
+
+    async function copyShort() {
+      const text = shortUrlEl.textContent;
+      await navigator.clipboard.writeText(text);
+      const btn = document.getElementById("copyBtn");
+      btn.textContent = "コピー済";
+      btn.classList.add("copied");
+      setTimeout(() => {
+        btn.textContent = "コピー";
+        btn.classList.remove("copied");
+      }, 2000);
+    }
+  </script>
+</body>
+</html>

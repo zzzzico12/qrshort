@@ -1,0 +1,7 @@
+fastapi
+mangum
+qrcode
+pillow
+boto3
+jinja2
+python-multipart
