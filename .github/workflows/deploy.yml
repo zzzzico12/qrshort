@@ -26,6 +26,16 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ap-northeast-1
 
+      - name: Rollback stack if stuck in failed state
+        run: |
+          STATUS=$(aws cloudformation describe-stacks --stack-name jawsqr \
+            --query 'Stacks[0].StackStatus' --output text 2>/dev/null || echo "DOES_NOT_EXIST")
+          echo "Stack status: $STATUS"
+          if [[ "$STATUS" == "UPDATE_FAILED" || "$STATUS" == "UPDATE_ROLLBACK_FAILED" ]]; then
+            aws cloudformation rollback-stack --stack-name jawsqr
+            aws cloudformation wait stack-rollback-complete --stack-name jawsqr
+          fi
+
       - run: sam build
 
       - run: sam deploy --no-confirm-changeset
