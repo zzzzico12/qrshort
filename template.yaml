@@ -57,6 +57,8 @@ Resources:
 
   UrlTable:
     Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       TableName: jawsqr-urls
       BillingMode: PAY_PER_REQUEST
@@ -100,6 +102,7 @@ Resources:
     Type: AWS::ApiGateway::BasePathMapping
     DependsOn: ServerlessRestApiProdStage
     Properties:
+      BasePath: qr
       DomainName: !Ref CustomDomain
       RestApiId: !Ref ServerlessRestApi
       Stage: Prod
