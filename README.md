@@ -1,8 +1,8 @@
-# jawsqr - QRコード & 短縮URL ジェネレーター
+# qrshort - QRコード & 短縮URL ジェネレーター
 
 URLを入力するだけでQRコードと短縮URLを同時に生成できるWebアプリです。
 
-🔗 **https://zzzzico.click**
+🔗 **https://zzzzico.click/qr/**
 
 ---
 
@@ -22,7 +22,7 @@ URLを入力するだけでQRコードと短縮URLを同時に生成できるWeb
 ## 機能
 
 - URLを入力してQRコードを即時生成
-- 短縮URL生成（`zzzzico.click/r/xxxxxx`）
+- 短縮URL生成（`zzzzico.click/qr/r/xxxxxx`）
 - QRコード PNG ダウンロード
 - 短縮URLのワンクリックコピー
 - 同一URLには同じ短縮コードを再利用
@@ -37,7 +37,7 @@ URLを入力するだけでQRコードと短縮URLを同時に生成できるWeb
 Route53 (DNS)
   ↓
 API Gateway (カスタムドメイン: zzzzico.click)
-  ↓
+  ↓ /qr/* → BasePathMapping
 Lambda (FastAPI + Mangum)
   ├── GET  /          → HTML配信
   ├── POST /shorten   → 短縮URL + QRコード生成
@@ -47,12 +47,20 @@ DynamoDB
   └── code (PK) ← → original_url (GSI)
 ```
 
+同一ドメイン（`zzzzico.click`）に複数アプリを相乗りさせる設計。
+各アプリが独自の API Gateway ベースパスを持つ。
+
+```
+zzzzico.click/qr/      → このアプリ（qrshort）
+zzzzico.click/XXX/     → 将来の別アプリ
+```
+
 ---
 
 ## ファイル構成
 
 ```
-jawsqr/
+qrshort/
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml      # GitHub Actions CI/CD
