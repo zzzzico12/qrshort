@@ -12,6 +12,7 @@ from fastapi import FastAPI, Form, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from mangum import Mangum
+from PIL import Image
 from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = logging.getLogger()
@@ -21,6 +22,7 @@ TABLE_NAME = os.environ.get("TABLE_NAME", "jawsqr-urls")
 BASE_URL = os.environ.get("BASE_URL", "http://localhost:8000")
 MAX_URL_LENGTH = 2048
 ALLOWED_SCHEMES = {"http", "https"}
+LOGO_PATH = ""
 
 dynamodb = boto3.resource("dynamodb", region_name=os.environ.get("AWS_REGION", "ap-northeast-1"))
 table = dynamodb.Table(TABLE_NAME)
@@ -69,15 +71,38 @@ def validate_url(url: str) -> str:
 def generate_qr_base64(url: str) -> str:
     qr = qrcode.QRCode(
         version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,  # 30%エラー訂正でロゴ埋め込みに対応
         box_size=10,
         border=4,
     )
     qr.add_data(url)
     qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white")
+    qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGBA")
+    qr_size = qr_img.size[0]
+
+    if os.path.exists(LOGO_PATH):
+        logo = Image.open(LOGO_PATH).convert("RGBA")
+
+        # QRコードの25%サイズに収める（NEARESTで拡大してドット感を維持）
+        embed_size = qr_size // 4
+        ratio = min(embed_size / logo.width, embed_size / logo.height)
+        new_w = int(logo.width * ratio)
+        new_h = int(logo.height * ratio)
+        logo = logo.resize((new_w, new_h), Image.NEAREST)
+
+        # 白背景パディングを貼ってからロゴを重ねる
+        pad = 8
+        bg = Image.new("RGBA", (new_w + pad * 2, new_h + pad * 2), (255, 255, 255, 255))
+        bg_x = (qr_size - bg.width) // 2
+        bg_y = (qr_size - bg.height) // 2
+        qr_img.paste(bg, (bg_x, bg_y))
+
+        logo_x = (qr_size - new_w) // 2
+        logo_y = (qr_size - new_h) // 2
+        qr_img.paste(logo, (logo_x, logo_y), logo)
+
     buf = io.BytesIO()
-    img.save(buf, format="PNG")
+    qr_img.convert("RGB").save(buf, format="PNG")
     return base64.b64encode(buf.getvalue()).decode()
 
 
