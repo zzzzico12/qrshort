@@ -214,31 +214,6 @@ _ICON_SVG = """\
   <rect x="82" y="82" width="8" height="8" rx="2" fill="#fff"/>
 </svg>"""
 
-def _make_icon_png(size: int) -> bytes:
-    from PIL import ImageDraw
-    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
-    s = size / 100
-    radius = int(size * 0.22)
-    draw.rounded_rectangle([0, 0, size - 1, size - 1], radius=radius, fill="#18181b")
-
-    def r(x, y, w, h, color):
-        draw.rectangle([int(x*s), int(y*s), int((x+w)*s)-1, int((y+h)*s)-1], fill=color)
-
-    # Three finder patterns
-    for fx, fy in [(12, 12), (58, 12), (12, 58)]:
-        r(fx, fy, 30, 30, "#ffffff")
-        r(fx+5, fy+5, 20, 20, "#18181b")
-        r(fx+9, fy+9, 12, 12, "#ffffff")
-
-    # Data dots (bottom-right)
-    for dx, dy in [(58,58),(70,58),(82,58),(58,70),(82,70),(58,82),(70,82),(82,82)]:
-        r(dx, dy, 8, 8, "#ffffff")
-
-    buf = io.BytesIO()
-    img.save(buf, format="PNG")
-    return buf.getvalue()
-
 
 _SW_JS = """\
 const CACHE = 'qrshort-v1';
@@ -292,20 +267,16 @@ async def pwa_manifest():
 
 @app.get("/icon-192.png")
 async def icon_192():
-    return Response(
-        content=_make_icon_png(192),
-        media_type="image/png",
-        headers={"Cache-Control": "public, max-age=86400"},
-    )
+    with open("icon-192.png", "rb") as f:
+        return Response(content=f.read(), media_type="image/png",
+                        headers={"Cache-Control": "public, max-age=86400"})
 
 
 @app.get("/icon-512.png")
 async def icon_512():
-    return Response(
-        content=_make_icon_png(512),
-        media_type="image/png",
-        headers={"Cache-Control": "public, max-age=86400"},
-    )
+    with open("icon-512.png", "rb") as f:
+        return Response(content=f.read(), media_type="image/png",
+                        headers={"Cache-Control": "public, max-age=86400"})
 
 
 @app.get("/sw.js")
