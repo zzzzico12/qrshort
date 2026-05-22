@@ -169,4 +169,5 @@ async def redirect_url(code: str):
     return RedirectResponse(url=target, status_code=302)
 
 
-handler = Mangum(app)
+_base_path = urlparse(BASE_URL).path.rstrip("/") or "/"
+handler = Mangum(app, api_gateway_base_path=_base_path)
