@@ -1,8 +1,8 @@
-# qrshort - QRコード & 短縮URL ジェネレーター
+# QR Generator
 
 URLを入力するだけでQRコードと短縮URLを同時に生成できるWebアプリです。
 
-🔗 **https://zzzzico.click/qr/**
+**https://zzzzico.click/qr/**
 
 ---
 
@@ -26,6 +26,11 @@ URLを入力するだけでQRコードと短縮URLを同時に生成できるWeb
 - QRコード PNG ダウンロード
 - 短縮URLのワンクリックコピー
 - 同一URLには同じ短縮コードを再利用
+- 中央ロゴ画像の埋め込み（PNG / JPEG / GIF / WebP、2MB以内）
+- QRドット色のプリセット選択（16色）
+- 背景色の選択（白 / 黒）
+- ドット形状の選択（四角 / 丸）
+- PWA対応（ホーム画面へのインストール、オフライン表示）
 
 ---
 
@@ -39,9 +44,12 @@ Route53 (DNS)
 API Gateway (カスタムドメイン: zzzzico.click)
   ↓ /qr/* → BasePathMapping
 Lambda (FastAPI + Mangum)
-  ├── GET  /          → HTML配信
-  ├── POST /shorten   → 短縮URL + QRコード生成
-  └── GET  /r/{code} → 元のURLへリダイレクト
+  ├── GET  /              → HTML配信
+  ├── POST /shorten       → 短縮URL + QRコード生成
+  ├── GET  /r/{code}      → 元のURLへリダイレクト
+  ├── GET  /manifest.json → PWAマニフェスト
+  ├── GET  /sw.js         → Service Worker
+  └── GET  /icon-*.png   → アプリアイコン
   ↓
 DynamoDB
   └── code (PK) ← → original_url (GSI)
@@ -51,7 +59,7 @@ DynamoDB
 各アプリが独自の API Gateway ベースパスを持つ。
 
 ```
-zzzzico.click/qr/      → このアプリ（qrshort）
+zzzzico.click/qr/      → このアプリ（QR Generator）
 zzzzico.click/XXX/     → 将来の別アプリ
 ```
 
@@ -66,6 +74,8 @@ qrshort/
 │       └── deploy.yml      # GitHub Actions CI/CD
 ├── templates/
 │   └── index.html          # フロントエンド
+├── icon-192.png            # PWAアイコン (192x192)
+├── icon-512.png            # PWAアイコン (512x512)
 ├── main.py                 # FastAPI アプリ
 ├── requirements.txt        # Python 依存パッケージ
 ├── template.yaml           # SAM テンプレート (AWSリソース定義)
@@ -78,7 +88,9 @@ qrshort/
 
 - `http` / `https` スキームのみ許可（`javascript:` 等をブロック）
 - URL 長制限（2048文字）
-- セキュリティヘッダー付与（`X-Frame-Options`, `CSP` 等）
+- セキュリティヘッダー付与（`X-Frame-Options`, `CSP` nonce, `HSTS` 等）
+- CSP の `script-src` / `style-src` はリクエストごとのnonce方式（`unsafe-inline` 不使用）
+- ロゴ画像のマジックバイト検証（Content-Type偽装対策）
 - API Gateway スロットリング（10 req/秒）
 - DynamoDB 保存データの暗号化 (SSE)
 - GitHub Actions は OIDC 認証（アクセスキー不要）
@@ -119,11 +131,12 @@ sam build && sam deploy
 
 ## AWS コスト
 
-| リソース | 無料枠 |
-|----------|--------|
-| Lambda | 月100万リクエスト |
-| API Gateway | 月100万リクエスト（12ヶ月） |
+| リソース | 料金 |
+|----------|------|
+| Lambda | 月100万リクエストまで無料 |
+| API Gateway | 月100万リクエストまで無料（12ヶ月）、以降 $3.50/百万 |
 | DynamoDB | 25GB 永久無料 |
-| Route53 | ホストゾーン $0.50/月 |
+| Route53 | ホストゾーン $0.50/月（固定） |
+| ACM | 無料 |
 
-ドメイン代（`zzzzico.click`）以外はほぼ無料で運用可能。
+個人利用レベルのトラフィックであれば、ドメイン代（`zzzzico.click`）を除きほぼ $0.80/月（Route53固定費のみ）で運用可能。
