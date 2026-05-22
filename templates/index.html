@@ -573,7 +573,6 @@
     const result      = document.getElementById("result");
     const qrImg       = document.getElementById("qrImg");
     const shortUrlEl  = document.getElementById("shortUrl");
-    const origUrlEl   = document.getElementById("originalUrl");
     const downloadBtn = document.getElementById("downloadBtn");
     const btnText     = document.getElementById("btnText");
     const spinner     = document.getElementById("spinner");
@@ -710,7 +709,6 @@
         const dataUrl = "data:image/png;base64," + data.qr_base64;
         qrImg.src              = dataUrl;
         shortUrlEl.textContent = data.short_url;
-        origUrlEl.textContent  = data.original_url;
         downloadBtn.href       = dataUrl;
         result.classList.add("visible");
 
