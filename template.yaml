@@ -71,6 +71,16 @@ Resources:
           Properties:
             Path: /icon.svg
             Method: GET
+        AppIcon192:
+          Type: Api
+          Properties:
+            Path: /icon-192.png
+            Method: GET
+        AppIcon512:
+          Type: Api
+          Properties:
+            Path: /icon-512.png
+            Method: GET
 
   UrlTable:
     Type: AWS::DynamoDB::Table

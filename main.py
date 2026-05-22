@@ -214,6 +214,30 @@ _ICON_SVG = """\
   <rect x="82" y="82" width="8" height="8" rx="2" fill="#fff"/>
 </svg>"""
 
+def _make_icon_png(size: int) -> bytes:
+    from PIL import ImageDraw
+    img = Image.new("RGB", (size, size), "#18181b")
+    draw = ImageDraw.Draw(img)
+    s = size / 100
+
+    def r(x, y, w, h, color):
+        draw.rectangle([int(x*s), int(y*s), int((x+w)*s)-1, int((y+h)*s)-1], fill=color)
+
+    # Three finder patterns
+    for fx, fy in [(12, 12), (58, 12), (12, 58)]:
+        r(fx, fy, 30, 30, "#ffffff")
+        r(fx+5, fy+5, 20, 20, "#18181b")
+        r(fx+9, fy+9, 12, 12, "#ffffff")
+
+    # Data dots (bottom-right)
+    for dx, dy in [(58,58),(70,58),(82,58),(58,70),(82,70),(58,82),(70,82),(82,82)]:
+        r(dx, dy, 8, 8, "#ffffff")
+
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
+
+
 _SW_JS = """\
 const CACHE = 'qrshort-v1';
 
@@ -257,9 +281,29 @@ async def pwa_manifest():
         "background_color": "#f4f4f2",
         "theme_color": "#18181b",
         "icons": [
-            {"src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"},
+            {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+            {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+            {"src": "icon.svg",     "sizes": "any",      "type": "image/svg+xml"},
         ],
     }
+
+
+@app.get("/icon-192.png")
+async def icon_192():
+    return Response(
+        content=_make_icon_png(192),
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
+@app.get("/icon-512.png")
+async def icon_512():
+    return Response(
+        content=_make_icon_png(512),
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
 
 
 @app.get("/sw.js")
