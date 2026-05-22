@@ -55,9 +55,15 @@ def _draw_round_dots(qr_obj, fill_color: str, back_color: str) -> Image.Image:
     draw = ImageDraw.Draw(img)
     pad = 1
 
-    # Finder patterns occupy rows/cols 0-8 in three corners (7×7 pattern + 1 separator)
-    def _in_finder(r: int, c: int) -> bool:
-        return (r < 9 and c < 9) or (r < 9 and c >= n - 8) or (r >= n - 8 and c < 9)
+    # Keep structural patterns as squares so scanners can detect them
+    def _is_structural(r: int, c: int) -> bool:
+        # Finder patterns (7×7) + separators in three corners
+        if (r < 9 and c < 9) or (r < 9 and c >= n - 8) or (r >= n - 8 and c < 9):
+            return True
+        # Timing patterns (alternating strips on row 6 and col 6)
+        if r == 6 or c == 6:
+            return True
+        return False
 
     for r, row in enumerate(matrix):
         for c, val in enumerate(row):
@@ -66,7 +72,7 @@ def _draw_round_dots(qr_obj, fill_color: str, back_color: str) -> Image.Image:
                 y0 = (r + bd) * box + pad
                 x1 = (c + bd + 1) * box - pad - 1
                 y1 = (r + bd + 1) * box - pad - 1
-                if _in_finder(r, c):
+                if _is_structural(r, c):
                     draw.rectangle([x0, y0, x1, y1], fill=fill_color)
                 else:
                     draw.ellipse([x0, y0, x1, y1], fill=fill_color)
@@ -195,12 +201,11 @@ async def shorten(
     url: str = Form(...),
     logo: Optional[UploadFile] = File(None),
     fill_color: str = Form("#000000"),
-    back_color: str = Form("#ffffff"),
     dot_style: str = Form("square"),
 ):
     url = validate_url(url)
     fill_color = _validate_color(fill_color)
-    back_color = _validate_color(back_color)
+    back_color = "#ffffff"
     if dot_style not in ("square", "round"):
         dot_style = "square"
 
