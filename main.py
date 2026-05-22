@@ -172,7 +172,8 @@ def generate_qr_base64(
         logo = logo.resize((new_w, new_h), Image.NEAREST)
 
         pad = 8
-        bg = Image.new("RGBA", (new_w + pad * 2, new_h + pad * 2), (255, 255, 255, 255))
+        bg_rgb = tuple(int(back_color.lstrip("#")[i:i+2], 16) for i in (0, 2, 4)) + (255,)
+        bg = Image.new("RGBA", (new_w + pad * 2, new_h + pad * 2), bg_rgb)
         bg_x = (qr_size - bg.width) // 2
         bg_y = (qr_size - bg.height) // 2
         qr_img.paste(bg, (bg_x, bg_y))
