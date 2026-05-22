@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 import boto3
 import qrcode
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from mangum import Mangum
 from PIL import Image
@@ -105,6 +105,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "default-src 'self'; "
             f"script-src 'nonce-{nonce}'; "
             f"style-src 'nonce-{nonce}'; "
+            "worker-src 'self'; "
             "img-src 'self' data:;"
         )
         return response
@@ -189,6 +190,86 @@ def generate_qr_base64(
 
 def create_short_code(length: int = 6) -> str:
     return secrets.token_urlsafe(length)[:length]
+
+
+_ICON_SVG = """\
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="22" fill="#18181b"/>
+  <rect x="12" y="12" width="30" height="30" rx="4" fill="#fff"/>
+  <rect x="17" y="17" width="20" height="20" rx="2" fill="#18181b"/>
+  <rect x="21" y="21" width="12" height="12" rx="1" fill="#fff"/>
+  <rect x="58" y="12" width="30" height="30" rx="4" fill="#fff"/>
+  <rect x="63" y="17" width="20" height="20" rx="2" fill="#18181b"/>
+  <rect x="67" y="21" width="12" height="12" rx="1" fill="#fff"/>
+  <rect x="12" y="58" width="30" height="30" rx="4" fill="#fff"/>
+  <rect x="17" y="63" width="20" height="20" rx="2" fill="#18181b"/>
+  <rect x="21" y="67" width="12" height="12" rx="1" fill="#fff"/>
+  <rect x="58" y="58" width="8" height="8" rx="2" fill="#fff"/>
+  <rect x="70" y="58" width="8" height="8" rx="2" fill="#fff"/>
+  <rect x="82" y="58" width="8" height="8" rx="2" fill="#fff"/>
+  <rect x="58" y="70" width="8" height="8" rx="2" fill="#fff"/>
+  <rect x="82" y="70" width="8" height="8" rx="2" fill="#fff"/>
+  <rect x="58" y="82" width="8" height="8" rx="2" fill="#fff"/>
+  <rect x="70" y="82" width="8" height="8" rx="2" fill="#fff"/>
+  <rect x="82" y="82" width="8" height="8" rx="2" fill="#fff"/>
+</svg>"""
+
+_SW_JS = """\
+const CACHE = 'qrshort-v1';
+
+self.addEventListener('install', e => {
+  self.skipWaiting();
+  e.waitUntil(caches.open(CACHE).then(c => c.add('./')));
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(() => clients.claim())
+  );
+});
+
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
+  if (new URL(e.request.url).pathname.endsWith('/shorten')) return;
+  e.respondWith(
+    caches.match(e.request).then(cached => {
+      const network = fetch(e.request).then(res => {
+        if (res.ok) caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+        return res;
+      });
+      return cached || network;
+    })
+  );
+});"""
+
+
+@app.get("/manifest.json")
+async def pwa_manifest():
+    return {
+        "name": "QRShort",
+        "short_name": "QRShort",
+        "description": "URLからQRコードと短縮URLを生成",
+        "start_url": "./",
+        "scope": "./",
+        "display": "standalone",
+        "background_color": "#f4f4f2",
+        "theme_color": "#18181b",
+        "icons": [
+            {"src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"},
+        ],
+    }
+
+
+@app.get("/sw.js")
+async def service_worker():
+    return Response(content=_SW_JS, media_type="application/javascript")
+
+
+@app.get("/icon.svg")
+async def app_icon():
+    return Response(content=_ICON_SVG, media_type="image/svg+xml")
 
 
 @app.get("/", response_class=HTMLResponse)

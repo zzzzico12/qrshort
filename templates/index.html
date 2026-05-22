@@ -4,7 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>QRShort</title>
-  <link rel="icon" href="data:,">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <meta name="theme-color" content="#18181b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="QRShort">
   <style nonce="{{ request.state.csp_nonce }}">
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -730,6 +736,9 @@
       btn.textContent = "コピー済み";
       btn.classList.add("copied");
       setTimeout(() => { btn.textContent = "コピー"; btn.classList.remove("copied"); }, 2000);
+    }
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
     }
   </script>
 </body>
