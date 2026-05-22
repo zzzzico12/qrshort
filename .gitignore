@@ -6,3 +6,5 @@ urls.db
 .env
 vertical-logo@2x.png
 *.png
+!icon-192.png
+!icon-512.png

@@ -216,9 +216,11 @@ _ICON_SVG = """\
 
 def _make_icon_png(size: int) -> bytes:
     from PIL import ImageDraw
-    img = Image.new("RGB", (size, size), "#18181b")
+    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
     s = size / 100
+    radius = int(size * 0.22)
+    draw.rounded_rectangle([0, 0, size - 1, size - 1], radius=radius, fill="#18181b")
 
     def r(x, y, w, h, color):
         draw.rectangle([int(x*s), int(y*s), int((x+w)*s)-1, int((y+h)*s)-1], fill=color)
