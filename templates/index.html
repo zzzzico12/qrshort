@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>QR & 短縮URL ジェネレーター</title>
   <link rel="icon" href="data:,">
-  <style>
+  <style nonce="{{ request.state.csp_nonce }}">
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
@@ -281,7 +281,7 @@
 
       <div class="logo-upload">
         <span class="logo-label">中央に表示する画像（任意）</span>
-        <div class="logo-drop" id="logoDrop" onclick="document.getElementById('logoFile').click()">
+        <div class="logo-drop" id="logoDrop">
           <input type="file" id="logoFile" accept="image/png,image/jpeg,image/gif,image/webp" />
           <span class="logo-drop-text">PNG / JPEG / GIF / WebP（最大2MB）</span>
           <span style="font-size:1.2rem">🖼</span>
@@ -289,7 +289,7 @@
         <div class="logo-preview-wrap" id="logoPreview">
           <img id="logoThumb" src="" alt="preview" />
           <span class="logo-preview-name" id="logoName"></span>
-          <button type="button" class="logo-remove" onclick="removeLogo()" title="削除">✕</button>
+          <button type="button" class="logo-remove" id="logoRemoveBtn" title="削除">✕</button>
         </div>
       </div>
     </form>
@@ -304,7 +304,7 @@
       <div class="label">短縮URL</div>
       <div class="url-row">
         <div class="url-box" id="shortUrl"></div>
-        <button class="copy-btn" id="copyBtn" onclick="copyShort()">コピー</button>
+        <button class="copy-btn" id="copyBtn">コピー</button>
       </div>
 
       <div class="label">元のURL</div>
@@ -318,7 +318,7 @@
     </div>
   </div>
 
-  <script>
+  <script nonce="{{ request.state.csp_nonce }}">
     const form = document.getElementById("form");
     const urlInput = document.getElementById("urlInput");
     const errorMsg = document.getElementById("errorMsg");
@@ -334,6 +334,10 @@
     const logoPreview = document.getElementById("logoPreview");
     const logoThumb = document.getElementById("logoThumb");
     const logoName = document.getElementById("logoName");
+
+    logoDrop.addEventListener("click", () => logoFile.click());
+    document.getElementById("logoRemoveBtn").addEventListener("click", removeLogo);
+    document.getElementById("copyBtn").addEventListener("click", copyShort);
 
     logoFile.addEventListener("change", () => {
       if (logoFile.files[0]) showLogoPreview(logoFile.files[0]);

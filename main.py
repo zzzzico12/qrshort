@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 
 import boto3
 import qrcode
-from fastapi import FastAPI, File, Form, HTTPException, Request, Response, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from mangum import Mangum
@@ -18,6 +18,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
+Image.MAX_IMAGE_PIXELS = 10_000_000  # decompression bomb guard (~3162×3162px)
 
 TABLE_NAME = os.environ.get("TABLE_NAME", "jawsqr-urls")
 BASE_URL = os.environ.get("BASE_URL", "http://localhost:8000")
@@ -34,16 +36,32 @@ app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
 
+def _is_valid_image(data: bytes) -> bool:
+    if data[:4] == b"\x89PNG":
+        return True
+    if data[:3] == b"\xff\xd8\xff":
+        return True
+    if data[:6] in (b"GIF87a", b"GIF89a"):
+        return True
+    if len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return True
+    return False
+
+
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+        nonce = secrets.token_urlsafe(16)
+        request.state.csp_nonce = nonce
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline'; "
-            "style-src 'self' 'unsafe-inline'; "
+            f"script-src 'nonce-{nonce}'; "
+            f"style-src 'nonce-{nonce}'; "
             "img-src 'self' data:;"
         )
         return response
@@ -90,7 +108,10 @@ def generate_qr_base64(url: str, logo_data: Optional[bytes] = None) -> str:
         logo_source = LOGO_PATH
 
     if logo_source:
-        logo = Image.open(logo_source).convert("RGBA")
+        try:
+            logo = Image.open(logo_source).convert("RGBA")
+        except Exception:
+            raise HTTPException(status_code=400, detail="画像の処理に失敗しました")
 
         embed_size = qr_size // 4
         ratio = min(embed_size / logo.width, embed_size / logo.height)
@@ -133,6 +154,8 @@ async def shorten(request: Request, url: str = Form(...), logo: Optional[UploadF
         content = await logo.read(MAX_IMAGE_SIZE + 1)
         if len(content) > MAX_IMAGE_SIZE:
             raise HTTPException(status_code=400, detail="画像サイズは2MB以内にしてください")
+        if not _is_valid_image(content):
+            raise HTTPException(status_code=400, detail="無効な画像ファイルです")
         logo_data = content
 
     res = table.query(
