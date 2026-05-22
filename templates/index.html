@@ -171,31 +171,31 @@
     .customize-section { margin-top: 16px; }
 
     /* Color swatches */
-    .swatch-list {
+    .color-rows { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+    .color-row  { display: flex; align-items: flex-start; gap: 10px; }
+    .color-row-label {
+      font-size: 0.75rem; color: var(--text-muted);
+      width: 22px; flex-shrink: 0; padding-top: 3px;
+    }
+
+    .swatch-group {
       display: grid;
       grid-template-columns: repeat(8, 22px);
       gap: 6px;
-      margin-bottom: 14px;
     }
+    .swatch-group.hidden { display: none; }
 
     .swatch {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
+      width: 22px; height: 22px; border-radius: 50%;
       border: 1.5px solid transparent;
-      cursor: pointer;
-      flex-shrink: 0;
-      padding: 0;
-      transition: transform 100ms;
-      outline-offset: 2px;
+      cursor: pointer; flex-shrink: 0; padding: 0;
+      transition: transform 100ms; outline-offset: 2px;
     }
-
     .swatch-light { border-color: var(--border); }
-
     .swatch.selected { outline: 2px solid var(--border-dark); }
     .swatch:hover:not(.selected) { transform: scale(1.15); }
 
-    /* QR colors */
+    /* Dark QR colors (on light background) */
     .c-black   { background: #000000; }
     .c-slate   { background: #1e293b; }
     .c-gray    { background: #374151; }
@@ -212,6 +212,34 @@
     .c-magenta { background: #86198f; }
     .c-crimson { background: #881337; }
     .c-rose    { background: #9d174d; }
+
+    /* Light QR colors (on dark background) */
+    .lc-white    { background: #ffffff; }
+    .lc-lgray    { background: #e2e8f0; }
+    .lc-yellow   { background: #fef08a; }
+    .lc-gold     { background: #fcd34d; }
+    .lc-orange   { background: #fdba74; }
+    .lc-coral    { background: #fca5a5; }
+    .lc-rose     { background: #fda4af; }
+    .lc-pink     { background: #f9a8d4; }
+    .lc-fuchsia  { background: #f0abfc; }
+    .lc-lavender { background: #c4b5fd; }
+    .lc-sky      { background: #bae6fd; }
+    .lc-cyan     { background: #67e8f9; }
+    .lc-teal     { background: #5eead4; }
+    .lc-mint     { background: #86efac; }
+    .lc-lime     { background: #bef264; }
+    .lc-green    { background: #bbf7d0; }
+
+    /* Background colors */
+    .bg-white    { background: #ffffff; }
+    .bg-black    { background: #000000; }
+    .bg-charcoal { background: #111827; }
+    .bg-dnavy   { background: #0f172a; }
+    .bg-dslate   { background: #1e293b; }
+    .bg-dforest  { background: #052e16; }
+    .bg-dpurple  { background: #1e1b4b; }
+    .bg-dteal    { background: #042f2e; }
 
     /* Dot style cards */
     .dot-toggle { display: flex; gap: 8px; }
@@ -425,23 +453,61 @@
           <div class="customize-section">
             <span class="field-label">カスタマイズ</span>
 
-            <div class="swatch-list" id="qrSwatches" role="radiogroup" aria-label="QRコードの色">
-              <button type="button" class="swatch c-black selected"  data-color="#000000" title="ブラック"      aria-checked="true"></button>
-              <button type="button" class="swatch c-slate"           data-color="#1e293b" title="スレート"      aria-checked="false"></button>
-              <button type="button" class="swatch c-gray"            data-color="#374151" title="グレー"        aria-checked="false"></button>
-              <button type="button" class="swatch c-navy"            data-color="#1e3a8a" title="ネイビー"      aria-checked="false"></button>
-              <button type="button" class="swatch c-indigo"          data-color="#312e81" title="インディゴ"    aria-checked="false"></button>
-              <button type="button" class="swatch c-ocean"           data-color="#0e7490" title="オーシャン"    aria-checked="false"></button>
-              <button type="button" class="swatch c-teal"            data-color="#0f766e" title="ティール"      aria-checked="false"></button>
-              <button type="button" class="swatch c-forest"          data-color="#14532d" title="フォレスト"    aria-checked="false"></button>
-              <button type="button" class="swatch c-emerald"         data-color="#065f46" title="エメラルド"    aria-checked="false"></button>
-              <button type="button" class="swatch c-rust"            data-color="#7c2d12" title="テラコッタ"    aria-checked="false"></button>
-              <button type="button" class="swatch c-amber"           data-color="#92400e" title="アンバー"      aria-checked="false"></button>
-              <button type="button" class="swatch c-brown"           data-color="#78350f" title="ブラウン"      aria-checked="false"></button>
-              <button type="button" class="swatch c-purple"          data-color="#4c1d95" title="パープル"      aria-checked="false"></button>
-              <button type="button" class="swatch c-magenta"         data-color="#86198f" title="マゼンタ"      aria-checked="false"></button>
-              <button type="button" class="swatch c-crimson"         data-color="#881337" title="クリムゾン"    aria-checked="false"></button>
-              <button type="button" class="swatch c-rose"            data-color="#9d174d" title="ローズ"        aria-checked="false"></button>
+            <div class="color-rows">
+              <div class="color-row">
+                <span class="color-row-label">QR</span>
+                <div>
+                  <div class="swatch-group" id="qrSwatchesDark" role="radiogroup" aria-label="QRコードの色（暗色）">
+                    <button type="button" class="swatch c-black selected"  data-color="#000000" title="ブラック"    aria-checked="true"></button>
+                    <button type="button" class="swatch c-slate"           data-color="#1e293b" title="スレート"    aria-checked="false"></button>
+                    <button type="button" class="swatch c-gray"            data-color="#374151" title="グレー"      aria-checked="false"></button>
+                    <button type="button" class="swatch c-navy"            data-color="#1e3a8a" title="ネイビー"    aria-checked="false"></button>
+                    <button type="button" class="swatch c-indigo"          data-color="#312e81" title="インディゴ"  aria-checked="false"></button>
+                    <button type="button" class="swatch c-ocean"           data-color="#0e7490" title="オーシャン"  aria-checked="false"></button>
+                    <button type="button" class="swatch c-teal"            data-color="#0f766e" title="ティール"    aria-checked="false"></button>
+                    <button type="button" class="swatch c-forest"          data-color="#14532d" title="フォレスト"  aria-checked="false"></button>
+                    <button type="button" class="swatch c-emerald"         data-color="#065f46" title="エメラルド"  aria-checked="false"></button>
+                    <button type="button" class="swatch c-rust"            data-color="#7c2d12" title="テラコッタ"  aria-checked="false"></button>
+                    <button type="button" class="swatch c-amber"           data-color="#92400e" title="アンバー"    aria-checked="false"></button>
+                    <button type="button" class="swatch c-brown"           data-color="#78350f" title="ブラウン"    aria-checked="false"></button>
+                    <button type="button" class="swatch c-purple"          data-color="#4c1d95" title="パープル"    aria-checked="false"></button>
+                    <button type="button" class="swatch c-magenta"         data-color="#86198f" title="マゼンタ"    aria-checked="false"></button>
+                    <button type="button" class="swatch c-crimson"         data-color="#881337" title="クリムゾン"  aria-checked="false"></button>
+                    <button type="button" class="swatch c-rose"            data-color="#9d174d" title="ローズ"      aria-checked="false"></button>
+                  </div>
+                  <div class="swatch-group hidden" id="qrSwatchesLight" role="radiogroup" aria-label="QRコードの色（明色）">
+                    <button type="button" class="swatch lc-white swatch-light selected" data-color="#ffffff" title="ホワイト"   aria-checked="true"></button>
+                    <button type="button" class="swatch lc-lgray swatch-light"          data-color="#e2e8f0" title="シルバー"   aria-checked="false"></button>
+                    <button type="button" class="swatch lc-yellow swatch-light"         data-color="#fef08a" title="イエロー"   aria-checked="false"></button>
+                    <button type="button" class="swatch lc-gold swatch-light"           data-color="#fcd34d" title="ゴールド"   aria-checked="false"></button>
+                    <button type="button" class="swatch lc-orange swatch-light"         data-color="#fdba74" title="オレンジ"   aria-checked="false"></button>
+                    <button type="button" class="swatch lc-coral swatch-light"          data-color="#fca5a5" title="コーラル"   aria-checked="false"></button>
+                    <button type="button" class="swatch lc-rose swatch-light"           data-color="#fda4af" title="ローズ"     aria-checked="false"></button>
+                    <button type="button" class="swatch lc-pink swatch-light"           data-color="#f9a8d4" title="ピンク"     aria-checked="false"></button>
+                    <button type="button" class="swatch lc-fuchsia swatch-light"        data-color="#f0abfc" title="フューシャ" aria-checked="false"></button>
+                    <button type="button" class="swatch lc-lavender swatch-light"       data-color="#c4b5fd" title="ラベンダー" aria-checked="false"></button>
+                    <button type="button" class="swatch lc-sky swatch-light"            data-color="#bae6fd" title="スカイ"     aria-checked="false"></button>
+                    <button type="button" class="swatch lc-cyan swatch-light"           data-color="#67e8f9" title="シアン"     aria-checked="false"></button>
+                    <button type="button" class="swatch lc-teal swatch-light"           data-color="#5eead4" title="ティール"   aria-checked="false"></button>
+                    <button type="button" class="swatch lc-mint swatch-light"           data-color="#86efac" title="ミント"     aria-checked="false"></button>
+                    <button type="button" class="swatch lc-lime swatch-light"           data-color="#bef264" title="ライム"     aria-checked="false"></button>
+                    <button type="button" class="swatch lc-green swatch-light"          data-color="#bbf7d0" title="グリーン"   aria-checked="false"></button>
+                  </div>
+                </div>
+              </div>
+              <div class="color-row">
+                <span class="color-row-label">背景</span>
+                <div class="swatch-group" id="bgSwatches" role="radiogroup" aria-label="背景色">
+                  <button type="button" class="swatch bg-white swatch-light selected" data-color="#ffffff" data-mode="light" title="ホワイト"      aria-checked="true"></button>
+                  <button type="button" class="swatch bg-black"                        data-color="#000000" data-mode="dark"  title="ブラック"      aria-checked="false"></button>
+                  <button type="button" class="swatch bg-charcoal"                     data-color="#111827" data-mode="dark"  title="チャコール"    aria-checked="false"></button>
+                  <button type="button" class="swatch bg-dnavy"                        data-color="#0f172a" data-mode="dark"  title="ダークネイビー" aria-checked="false"></button>
+                  <button type="button" class="swatch bg-dslate"                       data-color="#1e293b" data-mode="dark"  title="ダークスレート" aria-checked="false"></button>
+                  <button type="button" class="swatch bg-dforest"                      data-color="#052e16" data-mode="dark"  title="ダークフォレスト" aria-checked="false"></button>
+                  <button type="button" class="swatch bg-dpurple"                      data-color="#1e1b4b" data-mode="dark"  title="ダークパープル" aria-checked="false"></button>
+                  <button type="button" class="swatch bg-dteal"                        data-color="#042f2e" data-mode="dark"  title="ダークティール" aria-checked="false"></button>
+                </div>
+              </div>
             </div>
 
             <div class="dot-toggle" role="group" aria-label="ドット形状">
@@ -566,16 +632,38 @@
 
     // ── Color swatches ──
     let fillColor = "#000000";
+    let backColor = "#ffffff";
 
-    document.querySelectorAll("#qrSwatches .swatch").forEach(el => {
-      el.addEventListener("click", () => {
-        document.querySelectorAll("#qrSwatches .swatch").forEach(s => {
-          s.classList.remove("selected"); s.setAttribute("aria-checked", "false");
+    function bindSwatchGroup(groupId, onChange) {
+      document.querySelectorAll("#" + groupId + " .swatch").forEach(el => {
+        el.addEventListener("click", () => {
+          document.querySelectorAll("#" + groupId + " .swatch").forEach(s => {
+            s.classList.remove("selected"); s.setAttribute("aria-checked", "false");
+          });
+          el.classList.add("selected");
+          el.setAttribute("aria-checked", "true");
+          onChange(el.dataset.color);
         });
-        el.classList.add("selected");
-        el.setAttribute("aria-checked", "true");
-        fillColor = el.dataset.color;
       });
+    }
+
+    bindSwatchGroup("qrSwatchesDark",  (c) => { fillColor = c; });
+    bindSwatchGroup("qrSwatchesLight", (c) => { fillColor = c; });
+
+    bindSwatchGroup("bgSwatches", (c) => {
+      backColor = c;
+      const isDark = document.querySelector("#bgSwatches .swatch.selected").dataset.mode === "dark";
+      const showId = isDark ? "qrSwatchesLight" : "qrSwatchesDark";
+      const hideId = isDark ? "qrSwatchesDark"  : "qrSwatchesLight";
+      document.getElementById(showId).classList.remove("hidden");
+      document.getElementById(hideId).classList.add("hidden");
+      // reset QR color to first swatch of active group
+      const first = document.querySelector("#" + showId + " .swatch");
+      document.querySelectorAll("#" + showId + " .swatch").forEach(s => {
+        s.classList.remove("selected"); s.setAttribute("aria-checked", "false");
+      });
+      first.classList.add("selected"); first.setAttribute("aria-checked", "true");
+      fillColor = first.dataset.color;
     });
 
     // ── Dot style ──
@@ -614,6 +702,7 @@
         fd.append("url", url);
         if (logoFile.files[0]) fd.append("logo", logoFile.files[0]);
         fd.append("fill_color", fillColor);
+        fd.append("back_color", backColor);
         fd.append("dot_style", dotStyle);
 
         const basePath = window.location.pathname.endsWith("/")

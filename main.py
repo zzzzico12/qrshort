@@ -201,11 +201,12 @@ async def shorten(
     url: str = Form(...),
     logo: Optional[UploadFile] = File(None),
     fill_color: str = Form("#000000"),
+    back_color: str = Form("#ffffff"),
     dot_style: str = Form("square"),
 ):
     url = validate_url(url)
     fill_color = _validate_color(fill_color)
-    back_color = "#ffffff"
+    back_color = _validate_color(back_color)
     if dot_style not in ("square", "round"):
         dot_style = "square"
 
