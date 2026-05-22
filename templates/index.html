@@ -171,6 +171,85 @@
 
     .download-btn:hover { background: #edf2f7; }
 
+    .logo-upload {
+      margin-top: 12px;
+    }
+
+    .logo-label {
+      font-size: 0.82rem;
+      color: #718096;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .logo-drop {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 2px dashed #e2e8f0;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .logo-drop:hover, .logo-drop.dragover {
+      border-color: #667eea;
+      background: #f0f0ff;
+    }
+
+    .logo-drop input[type="file"] {
+      display: none;
+    }
+
+    .logo-drop-text {
+      font-size: 0.85rem;
+      color: #a0aec0;
+      flex: 1;
+    }
+
+    .logo-preview-wrap {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      border: 2px solid #c6f6d5;
+      border-radius: 10px;
+      background: #f0fff4;
+    }
+
+    .logo-preview-wrap.visible { display: flex; }
+
+    .logo-preview-wrap img {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+      background: #fff;
+    }
+
+    .logo-preview-name {
+      flex: 1;
+      font-size: 0.85rem;
+      color: #276749;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .logo-remove {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #a0aec0;
+      font-size: 1.1rem;
+      line-height: 1;
+      padding: 2px 4px;
+    }
+
+    .logo-remove:hover { color: #c53030; }
+
     .spinner {
       display: none;
       width: 18px;
@@ -197,6 +276,20 @@
           <span id="btnText">生成</span>
           <span class="spinner" id="spinner"></span>
         </button>
+      </div>
+
+      <div class="logo-upload">
+        <span class="logo-label">中央に表示する画像（任意）</span>
+        <div class="logo-drop" id="logoDrop" onclick="document.getElementById('logoFile').click()">
+          <input type="file" id="logoFile" accept="image/png,image/jpeg,image/gif,image/webp" />
+          <span class="logo-drop-text">PNG / JPEG / GIF / WebP（最大2MB）</span>
+          <span style="font-size:1.2rem">🖼</span>
+        </div>
+        <div class="logo-preview-wrap" id="logoPreview">
+          <img id="logoThumb" src="" alt="preview" />
+          <span class="logo-preview-name" id="logoName"></span>
+          <button type="button" class="logo-remove" onclick="removeLogo()" title="削除">✕</button>
+        </div>
       </div>
     </form>
 
@@ -235,6 +328,48 @@
     const downloadBtn = document.getElementById("downloadBtn");
     const btnText = document.getElementById("btnText");
     const spinner = document.getElementById("spinner");
+    const logoFile = document.getElementById("logoFile");
+    const logoDrop = document.getElementById("logoDrop");
+    const logoPreview = document.getElementById("logoPreview");
+    const logoThumb = document.getElementById("logoThumb");
+    const logoName = document.getElementById("logoName");
+
+    logoFile.addEventListener("change", () => {
+      if (logoFile.files[0]) showLogoPreview(logoFile.files[0]);
+    });
+
+    logoDrop.addEventListener("dragover", (e) => { e.preventDefault(); logoDrop.classList.add("dragover"); });
+    logoDrop.addEventListener("dragleave", () => logoDrop.classList.remove("dragover"));
+    logoDrop.addEventListener("drop", (e) => {
+      e.preventDefault();
+      logoDrop.classList.remove("dragover");
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith("image/")) {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        logoFile.files = dt.files;
+        showLogoPreview(file);
+      }
+    });
+
+    function showLogoPreview(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        logoThumb.src = e.target.result;
+        logoName.textContent = file.name;
+        logoDrop.style.display = "none";
+        logoPreview.classList.add("visible");
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeLogo() {
+      logoFile.value = "";
+      logoThumb.src = "";
+      logoName.textContent = "";
+      logoPreview.classList.remove("visible");
+      logoDrop.style.display = "flex";
+    }
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -249,6 +384,7 @@
       try {
         const fd = new FormData();
         fd.append("url", url);
+        if (logoFile.files[0]) fd.append("logo", logoFile.files[0]);
         const basePath = window.location.pathname.endsWith("/")
           ? window.location.pathname
           : window.location.pathname + "/";

@@ -4,11 +4,12 @@ import logging
 import os
 import re
 import secrets
+from typing import Optional
 from urllib.parse import urlparse
 
 import boto3
 import qrcode
-from fastapi import FastAPI, Form, HTTPException, Request, Response
+from fastapi import FastAPI, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from mangum import Mangum
@@ -23,6 +24,8 @@ BASE_URL = os.environ.get("BASE_URL", "http://localhost:8000")
 MAX_URL_LENGTH = 2048
 ALLOWED_SCHEMES = {"http", "https"}
 LOGO_PATH = ""
+ALLOWED_IMAGE_TYPES = {"image/png", "image/jpeg", "image/gif", "image/webp"}
+MAX_IMAGE_SIZE = 2 * 1024 * 1024  # 2MB
 
 dynamodb = boto3.resource("dynamodb", region_name=os.environ.get("AWS_REGION", "ap-northeast-1"))
 table = dynamodb.Table(TABLE_NAME)
@@ -68,10 +71,10 @@ def validate_url(url: str) -> str:
     return url
 
 
-def generate_qr_base64(url: str) -> str:
+def generate_qr_base64(url: str, logo_data: Optional[bytes] = None) -> str:
     qr = qrcode.QRCode(
         version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_H,  # 30%エラー訂正でロゴ埋め込みに対応
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
         box_size=10,
         border=4,
     )
@@ -80,17 +83,21 @@ def generate_qr_base64(url: str) -> str:
     qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGBA")
     qr_size = qr_img.size[0]
 
-    if os.path.exists(LOGO_PATH):
-        logo = Image.open(LOGO_PATH).convert("RGBA")
+    logo_source = None
+    if logo_data:
+        logo_source = io.BytesIO(logo_data)
+    elif os.path.exists(LOGO_PATH):
+        logo_source = LOGO_PATH
 
-        # QRコードの25%サイズに収める（NEARESTで拡大してドット感を維持）
+    if logo_source:
+        logo = Image.open(logo_source).convert("RGBA")
+
         embed_size = qr_size // 4
         ratio = min(embed_size / logo.width, embed_size / logo.height)
         new_w = int(logo.width * ratio)
         new_h = int(logo.height * ratio)
         logo = logo.resize((new_w, new_h), Image.NEAREST)
 
-        # 白背景パディングを貼ってからロゴを重ねる
         pad = 8
         bg = Image.new("RGBA", (new_w + pad * 2, new_h + pad * 2), (255, 255, 255, 255))
         bg_x = (qr_size - bg.width) // 2
@@ -116,8 +123,17 @@ async def index(request: Request):
 
 
 @app.post("/shorten")
-async def shorten(request: Request, url: str = Form(...)):
+async def shorten(request: Request, url: str = Form(...), logo: Optional[UploadFile] = File(None)):
     url = validate_url(url)
+
+    logo_data = None
+    if logo and logo.filename:
+        if logo.content_type not in ALLOWED_IMAGE_TYPES:
+            raise HTTPException(status_code=400, detail="画像ファイル（PNG、JPEG、GIF、WebP）のみ使用できます")
+        content = await logo.read(MAX_IMAGE_SIZE + 1)
+        if len(content) > MAX_IMAGE_SIZE:
+            raise HTTPException(status_code=400, detail="画像サイズは2MB以内にしてください")
+        logo_data = content
 
     res = table.query(
         IndexName="original_url-index",
@@ -131,7 +147,7 @@ async def shorten(request: Request, url: str = Form(...)):
         table.put_item(Item={"code": code, "original_url": url})
 
     short_url = f"{BASE_URL.rstrip('/')}/r/{code}"
-    qr_data = generate_qr_base64(short_url)
+    qr_data = generate_qr_base64(short_url, logo_data)
     return {"short_url": short_url, "qr_base64": qr_data, "original_url": url}
 
 
