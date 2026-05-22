@@ -248,8 +248,8 @@ self.addEventListener('fetch', e => {
 @app.get("/manifest.json")
 async def pwa_manifest():
     return {
-        "name": "QRShort",
-        "short_name": "QRShort",
+        "name": "QR Generator",
+        "short_name": "QR Generator",
         "description": "URLからQRコードと短縮URLを生成",
         "start_url": "./",
         "scope": "./",

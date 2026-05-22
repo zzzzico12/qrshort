@@ -56,6 +56,21 @@ Resources:
           Properties:
             Path: /r/{code}
             Method: GET
+        Manifest:
+          Type: Api
+          Properties:
+            Path: /manifest.json
+            Method: GET
+        ServiceWorker:
+          Type: Api
+          Properties:
+            Path: /sw.js
+            Method: GET
+        AppIcon:
+          Type: Api
+          Properties:
+            Path: /icon.svg
+            Method: GET
 
   UrlTable:
     Type: AWS::DynamoDB::Table
