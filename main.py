@@ -21,6 +21,8 @@ logger.setLevel(logging.INFO)
 
 Image.MAX_IMAGE_PIXELS = 10_000_000  # decompression bomb guard (~3162×3162px)
 
+HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
+
 TABLE_NAME = os.environ.get("TABLE_NAME", "jawsqr-urls")
 BASE_URL = os.environ.get("BASE_URL", "http://localhost:8000")
 MAX_URL_LENGTH = 2048
@@ -34,6 +36,33 @@ table = dynamodb.Table(TABLE_NAME)
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
+
+
+def _validate_color(color: str) -> str:
+    if not HEX_COLOR_RE.match(color):
+        raise HTTPException(status_code=400, detail="無効な色形式です（例: #000000）")
+    return color
+
+
+def _draw_round_dots(qr_obj, fill_color: str, back_color: str) -> Image.Image:
+    from PIL import ImageDraw
+    matrix = qr_obj.get_matrix()
+    box = qr_obj.box_size
+    bd = qr_obj.border
+    n = len(matrix)
+    size = (n + bd * 2) * box
+    img = Image.new("RGB", (size, size), back_color)
+    draw = ImageDraw.Draw(img)
+    pad = 1
+    for r, row in enumerate(matrix):
+        for c, val in enumerate(row):
+            if val:
+                x0 = (c + bd) * box + pad
+                y0 = (r + bd) * box + pad
+                x1 = (c + bd + 1) * box - pad - 1
+                y1 = (r + bd + 1) * box - pad - 1
+                draw.ellipse([x0, y0, x1, y1], fill=fill_color)
+    return img
 
 
 def _is_valid_image(data: bytes) -> bool:
@@ -89,7 +118,13 @@ def validate_url(url: str) -> str:
     return url
 
 
-def generate_qr_base64(url: str, logo_data: Optional[bytes] = None) -> str:
+def generate_qr_base64(
+    url: str,
+    logo_data: Optional[bytes] = None,
+    fill_color: str = "#000000",
+    back_color: str = "#ffffff",
+    dot_style: str = "square",
+) -> str:
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_H,
@@ -98,7 +133,10 @@ def generate_qr_base64(url: str, logo_data: Optional[bytes] = None) -> str:
     )
     qr.add_data(url)
     qr.make(fit=True)
-    qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGBA")
+    if dot_style == "round":
+        qr_img = _draw_round_dots(qr, fill_color, back_color).convert("RGBA")
+    else:
+        qr_img = qr.make_image(fill_color=fill_color, back_color=back_color).convert("RGBA")
     qr_size = qr_img.size[0]
 
     logo_source = None
@@ -144,8 +182,19 @@ async def index(request: Request):
 
 
 @app.post("/shorten")
-async def shorten(request: Request, url: str = Form(...), logo: Optional[UploadFile] = File(None)):
+async def shorten(
+    request: Request,
+    url: str = Form(...),
+    logo: Optional[UploadFile] = File(None),
+    fill_color: str = Form("#000000"),
+    back_color: str = Form("#ffffff"),
+    dot_style: str = Form("square"),
+):
     url = validate_url(url)
+    fill_color = _validate_color(fill_color)
+    back_color = _validate_color(back_color)
+    if dot_style not in ("square", "round"):
+        dot_style = "square"
 
     logo_data = None
     if logo and logo.filename:
@@ -170,7 +219,7 @@ async def shorten(request: Request, url: str = Form(...), logo: Optional[UploadF
         table.put_item(Item={"code": code, "original_url": url})
 
     short_url = f"{BASE_URL.rstrip('/')}/r/{code}"
-    qr_data = generate_qr_base64(short_url, logo_data)
+    qr_data = generate_qr_base64(short_url, logo_data, fill_color, back_color, dot_style)
     return {"short_url": short_url, "qr_base64": qr_data, "original_url": url}
 
 

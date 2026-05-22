@@ -337,6 +337,86 @@
       background: var(--ok-bg);
     }
 
+    /* ── Customize ── */
+    .customize-section {
+      margin-top: 14px;
+    }
+
+    .customize-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .color-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .color-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .color-item-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .color-pick {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 28px;
+      height: 28px;
+      padding: 2px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      background: none;
+      flex-shrink: 0;
+    }
+
+    .color-pick::-webkit-color-swatch-wrapper { padding: 0; }
+    .color-pick::-webkit-color-swatch { border: none; border-radius: 2px; }
+    .color-pick::-moz-color-swatch { border: none; border-radius: 2px; }
+
+    .dot-toggle {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .dot-opt {
+      width: 34px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--text-faint);
+      transition: background 150ms, color 150ms;
+    }
+
+    .dot-opt + .dot-opt {
+      border-left: 1px solid var(--border);
+    }
+
+    .dot-opt:hover { background: #f4f4f2; color: var(--text-muted); }
+
+    .dot-opt.active {
+      background: var(--accent);
+      color: var(--accent-fg);
+    }
+
     /* ── Spinner ── */
     .spinner {
       display: none;
@@ -389,6 +469,40 @@
                   <path d="M1 1l8 8M9 1L1 9"/>
                 </svg>
               </button>
+            </div>
+          </div>
+
+          <div class="customize-section">
+            <span class="field-label">カスタマイズ</span>
+            <div class="customize-row">
+              <div class="color-group">
+                <label class="color-item">
+                  <span class="color-item-label">QR</span>
+                  <input type="color" id="fillColor" value="#000000" class="color-pick">
+                </label>
+                <label class="color-item">
+                  <span class="color-item-label">背景</span>
+                  <input type="color" id="bgColor" value="#ffffff" class="color-pick">
+                </label>
+              </div>
+              <div class="dot-toggle" role="group" aria-label="ドット形状">
+                <button type="button" class="dot-opt active" id="dotSquare" title="四角" aria-pressed="true">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
+                    <rect x="0" y="0" width="5" height="5"/>
+                    <rect x="9" y="0" width="5" height="5"/>
+                    <rect x="0" y="9" width="5" height="5"/>
+                    <rect x="9" y="9" width="5" height="5"/>
+                  </svg>
+                </button>
+                <button type="button" class="dot-opt" id="dotRound" title="丸" aria-pressed="false">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
+                    <circle cx="2.5" cy="2.5" r="2.5"/>
+                    <circle cx="11.5" cy="2.5" r="2.5"/>
+                    <circle cx="2.5" cy="11.5" r="2.5"/>
+                    <circle cx="11.5" cy="11.5" r="2.5"/>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -459,6 +573,22 @@
     document.getElementById("logoRemoveBtn").addEventListener("click", removeLogo);
     document.getElementById("copyBtn").addEventListener("click", copyShort);
 
+    let dotStyle = "square";
+    document.getElementById("dotSquare").addEventListener("click", () => {
+      dotStyle = "square";
+      document.getElementById("dotSquare").classList.add("active");
+      document.getElementById("dotSquare").setAttribute("aria-pressed", "true");
+      document.getElementById("dotRound").classList.remove("active");
+      document.getElementById("dotRound").setAttribute("aria-pressed", "false");
+    });
+    document.getElementById("dotRound").addEventListener("click", () => {
+      dotStyle = "round";
+      document.getElementById("dotRound").classList.add("active");
+      document.getElementById("dotRound").setAttribute("aria-pressed", "true");
+      document.getElementById("dotSquare").classList.remove("active");
+      document.getElementById("dotSquare").setAttribute("aria-pressed", "false");
+    });
+
     logoFile.addEventListener("change", () => {
       if (logoFile.files[0]) showLogoPreview(logoFile.files[0]);
     });
@@ -513,6 +643,9 @@
         const fd = new FormData();
         fd.append("url", url);
         if (logoFile.files[0]) fd.append("logo", logoFile.files[0]);
+        fd.append("fill_color", document.getElementById("fillColor").value);
+        fd.append("back_color", document.getElementById("bgColor").value);
+        fd.append("dot_style", dotStyle);
 
         const basePath = window.location.pathname.endsWith("/")
           ? window.location.pathname
