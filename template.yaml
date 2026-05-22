@@ -22,6 +22,8 @@ Globals:
         TABLE_NAME: !Ref UrlTable
         BASE_URL: !Ref BaseUrl
   Api:
+    BinaryMediaTypes:
+      - "multipart/form-data"
     MethodSettings:
       - ResourcePath: "/*"
         HttpMethod: "*"
