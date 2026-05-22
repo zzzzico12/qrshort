@@ -54,6 +54,11 @@ def _draw_round_dots(qr_obj, fill_color: str, back_color: str) -> Image.Image:
     img = Image.new("RGB", (size, size), back_color)
     draw = ImageDraw.Draw(img)
     pad = 1
+
+    # Finder patterns occupy rows/cols 0-8 in three corners (7×7 pattern + 1 separator)
+    def _in_finder(r: int, c: int) -> bool:
+        return (r < 9 and c < 9) or (r < 9 and c >= n - 8) or (r >= n - 8 and c < 9)
+
     for r, row in enumerate(matrix):
         for c, val in enumerate(row):
             if val:
@@ -61,7 +66,10 @@ def _draw_round_dots(qr_obj, fill_color: str, back_color: str) -> Image.Image:
                 y0 = (r + bd) * box + pad
                 x1 = (c + bd + 1) * box - pad - 1
                 y1 = (r + bd + 1) * box - pad - 1
-                draw.ellipse([x0, y0, x1, y1], fill=fill_color)
+                if _in_finder(r, c):
+                    draw.rectangle([x0, y0, x1, y1], fill=fill_color)
+                else:
+                    draw.ellipse([x0, y0, x1, y1], fill=fill_color)
     return img
 
 
