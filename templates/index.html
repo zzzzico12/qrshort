@@ -171,7 +171,12 @@
     .customize-section { margin-top: 16px; }
 
     /* Color swatches */
-    .swatch-list { display: flex; gap: 6px; margin-bottom: 14px; }
+    .swatch-list {
+      display: grid;
+      grid-template-columns: repeat(8, 22px);
+      gap: 6px;
+      margin-bottom: 14px;
+    }
 
     .swatch {
       width: 22px;
@@ -193,12 +198,20 @@
     /* QR colors */
     .c-black   { background: #000000; }
     .c-slate   { background: #1e293b; }
+    .c-gray    { background: #374151; }
     .c-navy    { background: #1e3a8a; }
+    .c-indigo  { background: #312e81; }
+    .c-ocean   { background: #0e7490; }
+    .c-teal    { background: #0f766e; }
     .c-forest  { background: #14532d; }
+    .c-emerald { background: #065f46; }
     .c-rust    { background: #7c2d12; }
-    .c-purple  { background: #4c1d95; }
-    .c-crimson { background: #881337; }
+    .c-amber   { background: #92400e; }
     .c-brown   { background: #78350f; }
+    .c-purple  { background: #4c1d95; }
+    .c-magenta { background: #86198f; }
+    .c-crimson { background: #881337; }
+    .c-rose    { background: #9d174d; }
 
     /* Dot style cards */
     .dot-toggle { display: flex; gap: 8px; }
@@ -413,14 +426,22 @@
             <span class="field-label">カスタマイズ</span>
 
             <div class="swatch-list" id="qrSwatches" role="radiogroup" aria-label="QRコードの色">
-              <button type="button" class="swatch c-black selected"   data-color="#000000" title="ブラック"    aria-checked="true"></button>
-              <button type="button" class="swatch c-slate"            data-color="#1e293b" title="ミッドナイト" aria-checked="false"></button>
-              <button type="button" class="swatch c-navy"             data-color="#1e3a8a" title="ネイビー"    aria-checked="false"></button>
-              <button type="button" class="swatch c-forest"           data-color="#14532d" title="フォレスト"  aria-checked="false"></button>
-              <button type="button" class="swatch c-rust"             data-color="#7c2d12" title="テラコッタ"  aria-checked="false"></button>
-              <button type="button" class="swatch c-purple"           data-color="#4c1d95" title="パープル"    aria-checked="false"></button>
-              <button type="button" class="swatch c-crimson"          data-color="#881337" title="クリムゾン"  aria-checked="false"></button>
-              <button type="button" class="swatch c-brown"            data-color="#78350f" title="ブラウン"    aria-checked="false"></button>
+              <button type="button" class="swatch c-black selected"  data-color="#000000" title="ブラック"      aria-checked="true"></button>
+              <button type="button" class="swatch c-slate"           data-color="#1e293b" title="スレート"      aria-checked="false"></button>
+              <button type="button" class="swatch c-gray"            data-color="#374151" title="グレー"        aria-checked="false"></button>
+              <button type="button" class="swatch c-navy"            data-color="#1e3a8a" title="ネイビー"      aria-checked="false"></button>
+              <button type="button" class="swatch c-indigo"          data-color="#312e81" title="インディゴ"    aria-checked="false"></button>
+              <button type="button" class="swatch c-ocean"           data-color="#0e7490" title="オーシャン"    aria-checked="false"></button>
+              <button type="button" class="swatch c-teal"            data-color="#0f766e" title="ティール"      aria-checked="false"></button>
+              <button type="button" class="swatch c-forest"          data-color="#14532d" title="フォレスト"    aria-checked="false"></button>
+              <button type="button" class="swatch c-emerald"         data-color="#065f46" title="エメラルド"    aria-checked="false"></button>
+              <button type="button" class="swatch c-rust"            data-color="#7c2d12" title="テラコッタ"    aria-checked="false"></button>
+              <button type="button" class="swatch c-amber"           data-color="#92400e" title="アンバー"      aria-checked="false"></button>
+              <button type="button" class="swatch c-brown"           data-color="#78350f" title="ブラウン"      aria-checked="false"></button>
+              <button type="button" class="swatch c-purple"          data-color="#4c1d95" title="パープル"      aria-checked="false"></button>
+              <button type="button" class="swatch c-magenta"         data-color="#86198f" title="マゼンタ"      aria-checked="false"></button>
+              <button type="button" class="swatch c-crimson"         data-color="#881337" title="クリムゾン"    aria-checked="false"></button>
+              <button type="button" class="swatch c-rose"            data-color="#9d174d" title="ローズ"        aria-checked="false"></button>
             </div>
 
             <div class="dot-toggle" role="group" aria-label="ドット形状">
