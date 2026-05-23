@@ -216,7 +216,7 @@ _ICON_SVG = """\
 
 
 _SW_JS = """\
-const CACHE = 'qrshort-v2';
+const CACHE = 'qrshort-v3';
 
 self.addEventListener('install', e => {
   self.skipWaiting();
@@ -233,7 +233,9 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
-  if (new URL(e.request.url).pathname.endsWith('/shorten')) return;
+  const path = new URL(e.request.url).pathname;
+  // Let network handle API calls and PWA assets directly
+  if (path.endsWith('/shorten') || path.includes('icon') || path.endsWith('manifest.json')) return;
   e.respondWith(
     caches.match(e.request).then(cached => {
       const network = fetch(e.request).then(res => {
@@ -248,7 +250,9 @@ self.addEventListener('fetch', e => {
 
 @app.get("/manifest.json")
 async def pwa_manifest():
-    return {
+    import json
+    return Response(
+        content=json.dumps({
         "name": "QR Generator",
         "short_name": "QR Generator",
         "description": "URLからQRコードと短縮URLを生成",
@@ -262,7 +266,9 @@ async def pwa_manifest():
             {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
             {"src": "icon.svg",     "sizes": "any",      "type": "image/svg+xml"},
         ],
-    }
+        }),
+        media_type="application/manifest+json",
+    )
 
 
 @app.get("/icon-192.png")
