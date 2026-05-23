@@ -101,13 +101,14 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; "
-            f"script-src 'nonce-{nonce}'; "
-            f"style-src 'nonce-{nonce}'; "
-            "worker-src 'self'; "
-            "img-src 'self' data:;"
-        )
+        if "text/html" in response.headers.get("content-type", ""):
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; "
+                f"script-src 'nonce-{nonce}'; "
+                f"style-src 'nonce-{nonce}'; "
+                "worker-src 'self'; "
+                "img-src 'self' data:;"
+            )
         return response
 
 
