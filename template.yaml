@@ -8,7 +8,7 @@ Parameters:
     Default: ""
   DomainName:
     Type: String
-    Default: "zzzzico.click"
+    Default: "qr.zzzzico.click"
   HostedZoneId:
     Type: String
     Default: "Z0179539GWUAV7DDCP3G"
@@ -89,7 +89,7 @@ Resources:
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:
-      TableName: jawsqr-urls
+      TableName: qrshort-urls
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: code
@@ -131,7 +131,6 @@ Resources:
     Type: AWS::ApiGateway::BasePathMapping
     DependsOn: ServerlessRestApiProdStage
     Properties:
-      BasePath: qr
       DomainName: !Ref CustomDomain
       RestApiId: !Ref ServerlessRestApi
       Stage: Prod

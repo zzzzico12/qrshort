@@ -2,7 +2,7 @@
 
 URLを入力するだけでQRコードと短縮URLを同時に生成できるWebアプリです。
 
-**https://zzzzico.click/qr/**
+**https://qr.zzzzico.click/**
 
 ---
 
@@ -22,7 +22,7 @@ URLを入力するだけでQRコードと短縮URLを同時に生成できるWeb
 ## 機能
 
 - URLを入力してQRコードを即時生成
-- 短縮URL生成（`zzzzico.click/qr/r/xxxxxx`）
+- 短縮URL生成（`qr.zzzzico.click/r/xxxxxx`）
 - QRコード PNG ダウンロード
 - 短縮URLのワンクリックコピー
 - 同一URLには同じ短縮コードを再利用
@@ -41,8 +41,8 @@ URLを入力するだけでQRコードと短縮URLを同時に生成できるWeb
   ↓ HTTPS
 Route53 (DNS)
   ↓
-API Gateway (カスタムドメイン: zzzzico.click)
-  ↓ /qr/* → BasePathMapping
+API Gateway (カスタムドメイン: qr.zzzzico.click)
+  ↓ BasePathMapping (root)
 Lambda (FastAPI + Mangum)
   ├── GET  /              → HTML配信
   ├── POST /shorten       → 短縮URL + QRコード生成
@@ -55,13 +55,7 @@ DynamoDB
   └── code (PK) ← → original_url (GSI)
 ```
 
-同一ドメイン（`zzzzico.click`）に複数アプリを相乗りさせる設計。
-各アプリが独自の API Gateway ベースパスを持つ。
-
-```
-zzzzico.click/qr/      → このアプリ（QR Generator）
-zzzzico.click/XXX/     → 将来の別アプリ
-```
+サブドメイン（`qr.zzzzico.click`）で独立したアプリとして運用する設計。
 
 ---
 
