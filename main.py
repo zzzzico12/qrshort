@@ -216,7 +216,7 @@ _ICON_SVG = """\
 
 
 _SW_JS = """\
-const CACHE = 'qrshort-v1';
+const CACHE = 'qrshort-v2';
 
 self.addEventListener('install', e => {
   self.skipWaiting();
