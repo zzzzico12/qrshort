@@ -25,6 +25,7 @@ Globals:
     BinaryMediaTypes:
       - "multipart/form-data"
       - "image/png"
+      - "*/*"
     MethodSettings:
       - ResourcePath: "/*"
         HttpMethod: "*"
