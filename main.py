@@ -216,7 +216,7 @@ _ICON_SVG = """\
 
 
 _SW_JS = """\
-const CACHE = 'qrshort-v3';
+const CACHE = 'qrshort-v4';
 
 self.addEventListener('install', e => {
   self.skipWaiting();
@@ -251,21 +251,21 @@ self.addEventListener('fetch', e => {
 @app.get("/manifest.json")
 async def pwa_manifest():
     import json
+    base = BASE_URL.rstrip("/")
     return Response(
         content=json.dumps({
-        "name": "QR Generator",
-        "short_name": "QR Generator",
-        "description": "URLからQRコードと短縮URLを生成",
-        "start_url": "./",
-        "scope": "./",
-        "display": "standalone",
-        "background_color": "#f4f4f2",
-        "theme_color": "#18181b",
-        "icons": [
-            {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-            {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
-            {"src": "icon.svg",     "sizes": "any",      "type": "image/svg+xml"},
-        ],
+            "name": "QR Generator",
+            "short_name": "QR Generator",
+            "description": "URLからQRコードと短縮URLを生成",
+            "start_url": base + "/",
+            "scope": base + "/",
+            "display": "standalone",
+            "background_color": "#f4f4f2",
+            "theme_color": "#18181b",
+            "icons": [
+                {"src": base + "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+                {"src": base + "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+            ],
         }),
         media_type="application/manifest+json",
     )
